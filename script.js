@@ -62,20 +62,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return equation.trim();
     };
-
+    
+    // ★★★ p=0の非表示、qの既約分数化を実装した最終版の関数 ★★★
     const formatCompleted = (a, p, q) => {
-        const formatFrac = num => {
-            const absNum = Math.abs(num);
-            if (absNum % 1 === 0) return absNum.toString();
-            return `\\frac{${absNum * 2}}{2}`;
+        // 最大公約数を求める関数 (ユークリッドの互除法)
+        const gcd = (x, y) => (y === 0 ? x : gcd(y, x % y));
+
+        // 数値を既約分数に変換する関数
+        const toFrac = (num) => {
+            if (num % 1 === 0) return Math.abs(num).toString(); // 整数ならそのまま返す
+            let denominator = 100; // 小数第2位までを想定
+            let numerator = Math.round(num * denominator);
+            const commonDivisor = gcd(numerator, denominator);
+            numerator /= commonDivisor;
+            denominator /= commonDivisor;
+            return `\\frac{${Math.abs(numerator)}}{${denominator}}`;
         };
+
         let result = 'y = ';
+        // aの処理
         if (a === -1) result += '-';
         else if (a !== 1) result += a;
-        result += `(x ${p >= 0 ? '+' : '-'} ${formatFrac(p)})^{2} `;
+
+        // pの処理 (pが0の場合はx^2のみ表示)
+        if (p === 0) {
+            if (a !== 1 && a !== -1) result += 'x^{2} '; // aが1,-1以外ならx^2を表示
+            else result += (a === 1) ? 'x^{2} ' : '-x^{2} '; // aが1,-1ならx^2または-x^2を表示
+        } else {
+            result += `(x ${p > 0 ? '+' : '-'} ${toFrac(p)})^{2} `;
+        }
+        
+        // qの処理
         if (q !== 0) {
-           if (q > 0) result += `+ ${formatFrac(q)}`;
-           else result += `- ${formatFrac(q)}`;
+           if (q > 0) result += `+ ${toFrac(q)}`;
+           else result += `- ${toFrac(q)}`;
         }
         return result.trim();
     };
