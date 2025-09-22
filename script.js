@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return { a, b, c };
     };
 
-    // === 数式表示の改善を反映した、最終版の関数 ===
     const formatLatex = (a, b, c) => {
         let equation = 'y = ';
         if (a === -1) equation += '-';
@@ -63,37 +62,46 @@ document.addEventListener('DOMContentLoaded', () => {
         return equation.trim();
     };
     
-    // ★★★ p=0の非表示、qの既約分数化を実装した最終版の関数 ★★★
+    // ★★★ 分母が負にならないよう改善した最終版の関数 ★★★
     const formatCompleted = (a, p, q) => {
-        // 最大公約数を求める関数 (ユークリッドの互除法)
-        const gcd = (x, y) => (y === 0 ? x : gcd(y, x % y));
+        // 常に正の整数を返す、より安全な最大公約数(GCD)関数
+        const gcd = (a, b) => {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) { [a, b] = [b, a % b]; }
+            return a;
+        };
 
-        // 数値を既約分数に変換する関数
+        // 数値の「絶対値」を既約分数の文字列に変換する関数
         const toFrac = (num) => {
-            if (num % 1 === 0) return Math.abs(num).toString(); // 整数ならそのまま返す
-            let denominator = 100; // 小数第2位までを想定
-            let numerator = Math.round(num * denominator);
+            const absNum = Math.abs(num);
+            if (absNum % 1 === 0) return absNum.toString();
+            
+            let denominator = 1000; // 計算精度を向上
+            let numerator = Math.round(absNum * denominator);
+            
             const commonDivisor = gcd(numerator, denominator);
+            
             numerator /= commonDivisor;
             denominator /= commonDivisor;
-            return `\\frac{${Math.abs(numerator)}}{${denominator}}`;
+            
+            if (denominator === 1) return numerator.toString();
+            return `\\frac{${numerator}}{${denominator}}`;
         };
 
         let result = 'y = ';
-        // aの処理
         if (a === -1) result += '-';
         else if (a !== 1) result += a;
 
-        // pの処理 (pが0の場合はx^2のみ表示)
         if (p === 0) {
-            if (a !== 1 && a !== -1) result += 'x^{2} '; // aが1,-1以外ならx^2を表示
-            else result += (a === 1) ? 'x^{2} ' : '-x^{2} '; // aが1,-1ならx^2または-x^2を表示
+            result += 'x^{2} ';
         } else {
+            // 符号(+, -)はここで決定し、toFracは絶対値の分数を作ることに専念
             result += `(x ${p > 0 ? '+' : '-'} ${toFrac(p)})^{2} `;
         }
         
-        // qの処理
         if (q !== 0) {
+           // 符号(+, -)はここで決定
            if (q > 0) result += `+ ${toFrac(q)}`;
            else result += `- ${toFrac(q)}`;
         }
